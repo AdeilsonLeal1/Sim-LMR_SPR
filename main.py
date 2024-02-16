@@ -15,7 +15,7 @@ class Simulator_LMRSPR(object):
     def __init__(self):
         region = {1: 'Same detection region', 2:'Different detection regions'}
         structure = {1:'Kretschmann-Raether configuration', 2:'Optical Fiber configuration', 3:'Planar Waveguide configuration'}
-        self.materials = {1: 'BK7', 2:'Silica', 3: 'N-F2', 4: 'Synthetic sapphire(Al2O3)', 5:'SF10', 6: 'FK51A', 7: 'N-SF14', 8:'Acrylic SUVT', 9: 'PVA', 10: 'Glycerin', 11: 'Quartz', 12: 'Gold', 13: 'Silver', 14: 'Copper', 15: 'P3HT:PC61BM', 16:'PEDOT:PSS', 17: '2D HOIP',18:'TiO2', 19:'ZnO', 20:'Water', 21: 'Air', 22:'LiF', 23:'Cytop', 24:'ITO',25:'Analyte'}
+        self.materials = {1: 'BK7', 2:'Silica', 3: 'N-F2', 4: 'Synthetic sapphire(Al2O3)', 5:'SF10', 6: 'FK51A', 7: 'N-SF14', 8:'Acrylic SUVT', 9: 'PVA', 10: 'Glycerin', 11: 'Quartz', 12: 'Gold', 13: 'Silver', 14: 'Copper', 15: 'P3HT:PC61BM', 16:'PEDOT:PSS', 17: '2D HOIP',18:'TiO2', 19:'ZnO', 20:'Water', 21: 'Air', 22:'LiF', 23:'Cytop', 24:'ITO',25:'Analyte', 26: 'WS2', 27: 'Platinum', 28: 'Graphene', 29:'BSTS', 30:'Cobalt', 31:'Nickel', 32:'BaTiO3'}
         
         self.init = 0
         self.final = 0
@@ -29,7 +29,7 @@ class Simulator_LMRSPR(object):
         self.step = 0           # Analyte variation step
         self.nvar = 0           # Number of analyte variations
         self.refractive_index = list()     # List with refractive index of each layer
-        self.lambda_i = arange(400*1E-9, 3000*1E-9, 1*1E-9)
+        self.lambda_i = arange(400*1E-9, 1000*1E-9, 1*1E-9)
         self.critical_point = list()    # threshold angle for Attenuated Total Reflection
         self.P_trans_TE = list()
         self.P_trans_TM = list()
@@ -140,9 +140,9 @@ class Simulator_LMRSPR(object):
                 
                 # Assignment of Thickness
                 while True:
-                    d = input("Thickness (nm): ")
-                    if d.isnumeric() and float(d)>0:
-                        self.d.append(float(d)*1e-9)
+                    d = float(input("Thickness (nm): "))
+                    if d > 0:
+                        self.d.append(d*1e-9)
                         break
                     else:
                         print("- {!} - \nInvalid Value!\nPlease enter a positive number...\n")
@@ -184,7 +184,7 @@ class Simulator_LMRSPR(object):
             for mat in self.materials:
                 stringmaterials.append(f"{f'{mat} - {self.materials[mat]}':<18}")
             
-            stringmaterials = f"\t{stringmaterials[0]}{stringmaterials[1]}{stringmaterials[2]}{stringmaterials[3]}\n\t{stringmaterials[4]}{stringmaterials[5]}{stringmaterials[6]}{stringmaterials[7]}\n\t{stringmaterials[8]}{stringmaterials[9]}{stringmaterials[10]}{stringmaterials[11]}\n\t{stringmaterials[12]}{stringmaterials[13]}{stringmaterials[14]}{stringmaterials[15]}\n\t{stringmaterials[16]}{stringmaterials[17]}{stringmaterials[18]}{stringmaterials[19]}\n\t{stringmaterials[20]}{stringmaterials[21]}{stringmaterials[22]}{stringmaterials[23]}\n\t{stringmaterials[24]}"
+            stringmaterials = f"\t{stringmaterials[0]}{stringmaterials[1]}{stringmaterials[2]}{stringmaterials[3]}\n\t{stringmaterials[4]}{stringmaterials[5]}{stringmaterials[6]}{stringmaterials[7]}\n\t{stringmaterials[8]}{stringmaterials[9]}{stringmaterials[10]}{stringmaterials[11]}\n\t{stringmaterials[12]}{stringmaterials[13]}{stringmaterials[14]}{stringmaterials[15]}\n\t{stringmaterials[16]}{stringmaterials[17]}{stringmaterials[18]}{stringmaterials[19]}\n\t{stringmaterials[20]}{stringmaterials[21]}{stringmaterials[22]}{stringmaterials[23]}\n\t{stringmaterials[24]}{stringmaterials[25]}{stringmaterials[26]}{stringmaterials[27]}\n\t{stringmaterials[28]}{stringmaterials[29]}{stringmaterials[30]}{stringmaterials[31]}"
             
             return stringmaterials
         elif label == 'Layers':
@@ -219,7 +219,7 @@ class Simulator_LMRSPR(object):
         while True:
             L = input("Length of the sensing region (L) (mm): ")
             
-            if L.isnumeric() and float(L) > 0:
+            if float(L) > 0:
                 self.L = float(L)*1e-3
                 break
             else:
@@ -333,8 +333,8 @@ class Simulator_LMRSPR(object):
                             P_trans_te = integral_num/integral_den
                             P_trans_TE.append(P_trans_te)
                 
-                P_trans_TM = list(self.butter_lowpass_filter(P_trans_TM, cutoff=2, fs=40, order=5))
-                P_trans_TE = list(self.butter_lowpass_filter(P_trans_TE, cutoff=2, fs=40, order=5))
+                #P_trans_TM = list(self.butter_lowpass_filter(P_trans_TM, cutoff=2, fs=40, order=5))
+                #P_trans_TE = list(self.butter_lowpass_filter(P_trans_TE, cutoff=2, fs=40, order=5))
                 
                 self.P_trans_TE.append(P_trans_TE)
                 self.P_trans_TM.append(P_trans_TM)
@@ -353,47 +353,48 @@ class Simulator_LMRSPR(object):
             
         for n in range(len(self.list_analyte)):
             pot = self.P_trans_TM[n] if pol == 'TM' else self.P_trans_TE[n]
-            max_list, min_list = self.find_max_min( seq = pot)
-            lambda_res = []
+            #max_list, min_list = self.find_max_min( seq = pot)
+            idmin = pot.index(min(pot))
+            lambda_res = self.lambda_i[idmin]*1E9
            
-            for m in range(len(min_list)):
-                lambda_res.append(self.lambda_i[min_list[m][0]]*1E9)
+            #for m in range(len(min_list)):
+            #    lambda_res.append(self.lambda_i[min_list[m][0]]*1E9)
 
             if pol == 'TM':
                 self.lambda_res_TM.append(lambda_res)
             else:
                 self.lambda_res_TE.append(lambda_res)
         
-        if pol == 'TM':
-            self.lambda_res_TM = [[row[i] for row in self.lambda_res_TM] for i in range(len(self.lambda_res_TM[0]))]
-        else:
-            self.lambda_res_TE = [[row[i] for row in self.lambda_res_TE] for i in range(len(self.lambda_res_TE[0]))]
+        #if pol == 'TM':
+        #    self.lambda_res_TM = [[row[i] for row in self.lambda_res_TM] for i in range(len(self.lambda_res_TM[0]))]
+        #else:
+        #    self.lambda_res_TE = [[row[i] for row in self.lambda_res_TE] for i in range(len(self.lambda_res_TE[0]))]
         
 
-        for n in range(self.n_res):
-            sensi_ = []
-            delta_lambda_ = []
+        #for n in range(self.n_res):
+        sensi_ = []
+        delta_lambda_ = []
 
-            for m in range(len(self.list_analyte)):
-                if m == 0:
-                    # The first interaction is initialized to zero because the ratio would be 0/0
-                    sensi_.append(0)
-                    delta_lambda_.append(0*1E9)
+        for m in range(len(self.list_analyte)):
+            if m == 0:
+                # The first interaction is initialized to zero because the ratio would be 0/0
+                sensi_.append(0)
+                delta_lambda_.append(0*1E9)
 
-                else:
-                    if pol == 'TM':
-                        delta_lambda_.append(abs(self.lambda_res_TM[n][m] - self.lambda_res_TM[n][m-1]))
-                    else:
-                        delta_lambda_.append(abs(self.lambda_res_TE[n][m] - self.lambda_res_TE[n][m-1]))
-                    
-                    sensi_.append(round((delta_lambda_[m] / self.step), 6))
-
-            sensi_[0] = sensi_[1]
-
-            if pol == 'TM':
-                self.sensibility_TM.append(sensi_)
             else:
-                self.sensibility_TE.append(sensi_)
+                if pol == 'TM':
+                    delta_lambda_.append(abs(self.lambda_res_TM[m] - self.lambda_res_TM[m-1]))
+                else:
+                    delta_lambda_.append(abs(self.lambda_res_TE[m] - self.lambda_res_TE[m-1]))
+                
+                sensi_.append(round((delta_lambda_[m] / self.step), 6))
+
+        sensi_[0] = sensi_[1]
+
+        if pol == 'TM':
+            self.sensibility_TM = sensi_
+        else:
+            self.sensibility_TE = sensi_
                       
     def calc_fiber(self, index_analyte):
         P_trans_TM = []
@@ -493,79 +494,81 @@ class Simulator_LMRSPR(object):
         return max_list, min_list
         
     def calc_FWHM(self, pol):
+        fwhm_ = []
+        da_ = []        
         for n in range(len(self.list_analyte)):
-            fwhm_ = []
-            da_ = []
+
             curve = self.P_trans_TM[n] if pol == 'TM' else self.P_trans_TE[n]
-            max_list, min_list = self.find_max_min(curve)
-            for m in range(len(max_list)-1):
-                lambda_i = list(self.lambda_i[max_list[m][0]:max_list[m+1][0]])
-                y = list(curve[max_list[m][0]:max_list[m+1][0]])
+            #max_list, min_list = self.find_max_min(curve)
+            #for m in range(len(max_list)-1):
+            #lambda_i = list(self.lambda_i[max_list[m][0]:max_list[m+1][0]])
+            #y = list(curve[max_list[m][0]:max_list[m+1][0]])
+            y = curve
 
-                id_min = y.index(min(y))  # Position of the minimum point of the curve
+            id_min = y.index(min(y))  # Position of the minimum point of the curve
 
-                y_left = y[0:(id_min+1)]
-                y_right = y[id_min:len(y)]
+            y_left = y[0:(id_min+1)]
+            y_right = y[id_min:len(y)]
 
-                y_mx_left = max(y_left)
-                y_mn_left = min(y_left)
+            y_mx_left = max(y_left)
+            y_mn_left = min(y_left)
 
-                y_mx_right = max(y_right)
-                y_mn_right = min(y_right)
+            y_mx_right = max(y_right)
+            y_mn_right = min(y_right)
 
-                y_med_left = (y_mx_left + y_mn_left)/2
-                y_med_right = (y_mx_right + y_mn_right)/2
+            y_med_left = (y_mx_left + y_mn_left)/2
+            y_med_right = (y_mx_right + y_mn_right)/2
 
-                y_med = (y_med_left + y_med_right)/2
-                #y_med = (1+min(y))/2    
-                #y_med = (max(y) + min(y))/2 
-                #y_med = max(y)/2
-                #y_med = y_mx_right
+            y_med = (y_med_left + y_med_right)/2
+            #y_med = (1+min(y))/2    
+            #y_med = (max(y) + min(y))/2 
+            #y_med = max(y)/2
+            #y_med = y_mx_right
+            
+            try:
+                # Gaur's methodology for calculating FWHM
+                y_left = asarray(y_left)
+                y_right = asarray(y_right)
+                idx1 = (abs(y_left - y_med_left)).argmin() 
+                idx2 = (abs(y_right - y_med_right)).argmin() 
+                x1= self.lambda_i[idx1]*1E9
+                x2= self.lambda_i[id_min + idx2]*1E9
                 
-                try:
-                    # Gaur's methodology for calculating FWHM
-                    y_left = asarray(y_left)
-                    y_right = asarray(y_right)
-                    idx1 = (abs(y_left - y_med_left)).argmin() 
-                    idx2 = (abs(y_right - y_med_right)).argmin() 
-                    x1= lambda_i[idx1]*1E9
-                    x2= lambda_i[id_min + idx2]*1E9
-                    
-                    f = sqrt(abs((x2-x1))**2 + abs(y_med_right - y_med_left)**2)
-                    
-                    fwhm_.append(round(f, 6))
-                    da_.append(round(1/f, 6))
-                except:
-                    fwhm_.append(1)
-                    da_.append(1)
+                f = sqrt(abs((x2-x1))**2 + abs(y_med_right - y_med_left)**2)
+                
+                fwhm_.append(round(f, 6))
+                da_.append(round(1/f, 6))
+            except:
+                fwhm_.append(1)
+                da_.append(1)
 
             if pol == 'TM':
-                self.fwhm_TM.append(fwhm_)
-                self.da_TM.append(da_)
+                self.fwhm_TM = fwhm_
+                self.da_TM = da_
             else:
-                self.fwhm_TE.append(fwhm_)
-                self.da_TE.append(da_)
+                self.fwhm_TE = fwhm_
+                self.da_TE = da_
 
-        if pol == 'TM':
-            self.fwhm_TM = [[row[i] for row in self.fwhm_TM] for i in range(len(self.fwhm_TM[0]))]
-            self.da_TM = [[row[i] for row in self.da_TM] for i in range(len(self.da_TM[0]))]
-        else:
-            self.fwhm_TE = [[row[i] for row in self.fwhm_TE] for i in range(len(self.fwhm_TE[0]))]
-            self.da_TE = [[row[i] for row in self.da_TE] for i in range(len(self.da_TE[0]))]
+        #if pol == 'TM':
+        #    self.fwhm_TM = [[row[i] for row in self.fwhm_TM] for i in range(len(self.fwhm_TM[0]))]
+        #    self.da_TM = [[row[i] for row in self.da_TM] for i in range(len(self.da_TM[0]))]
+        #else:
+        #    self.fwhm_TE = [[row[i] for row in self.fwhm_TE] for i in range(len(self.fwhm_TE[0]))]
+        #    self.da_TE = [[row[i] for row in self.da_TE] for i in range(len(self.da_TE[0]))]
 
     def calc_qf(self, pol):
-        for n in range(self.n_res):
-            qf_ = []
-            for m in range(len(self.list_analyte)):
-                    if pol == 'TM':
-                        qf_.append(round(self.sensibility_TM[n][m]/self.fwhm_TM[n][m],6))
-                    else:
-                        qf_.append(round(self.sensibility_TE[n][m]/self.fwhm_TE[n][m],6))
+        #for n in range(self.n_res):
+        qf_ = []
+        for m in range(len(self.list_analyte)):
+                if pol == 'TM':
+                    qf_.append(round(self.sensibility_TM[m]/self.fwhm_TM[m],6))
+                else:
+                    qf_.append(round(self.sensibility_TE[m]/self.fwhm_TE[m],6))
 
-            if pol == 'TM':
-                self.qf_TM.append(qf_)
-            else:
-                self.qf_TE.append(qf_)
+        if pol == 'TM':
+            self.qf_TM.append(qf_)
+        else:
+            self.qf_TE.append(qf_)
   
     def does_it_have_resonance(self, pot):
         max_list, min_list = self.find_max_min(pot)

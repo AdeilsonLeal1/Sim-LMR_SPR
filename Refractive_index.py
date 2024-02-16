@@ -22,7 +22,15 @@ def set_RefractiveIndex(material, lambda_i):
               'TiO2':[4.13566743*1E-15, 3*1E8, 101, 1.2, 6.2, 1],
               'ZnO':[299792458, 3.4, 2*1E15, 1.5*1E14],
               'Silver':[ 1, 0.14541, 17.6140],
-              'ITO':[3.8, 0.56497, 11.21076]}
+              'ITO':[3.8, 0.56497, 11.21076], 
+              'Gold':[1, 0.16826, 8.9342], 
+              'Platinum':[1, 0.2415, 17.95], 
+              'Nickel':[1, 0.25381, 28.409],
+              'Cobalt':[1, 0.31215, 33.578], 
+              'Graphene':[3, 5.446], 
+              'WS2':[4.9, 0.3124], 
+              'BSTS':[299792458, 1.3, 7.5, 0.05, 241799050402293], 
+              'BaTiO3':[4.187, 0, 0, 0.223**2, 0,0]}
     
     if material == 1:  # BK7
         ri = eq_sellmeier(coefs_['BK7'], Lambda_i)
@@ -58,14 +66,19 @@ def set_RefractiveIndex(material, lambda_i):
         ri = eq_cauchy_mod(coefs_['Quartz'], Lambda_i)
         
     elif material == 12:  # Gold
-        ri = interp_Au(Lambda_i)
+        # calculating by interpolation
+        #ri = interp_Au(Lambda_i)
+        
+        # Calulating by Drude model
+        e_Au = eq_drude_metals(coefs_['Gold'] ,Lambda_i)
+        ri = sqrt(e_Au)
  
     elif material == 13:  # Silver
         # calculating by interpolation
         #ri = interp_Ag(Lambda_i)
         
         # Calulating by Drude model
-        e_Ag = eq_drude_Ag(coefs_['Silver'] ,Lambda_i)
+        e_Ag = eq_drude_metals(coefs_['Silver'] ,Lambda_i)
         ri = sqrt(e_Ag)
 
     elif material == 14:  # Copper
@@ -101,10 +114,45 @@ def set_RefractiveIndex(material, lambda_i):
         ri = 1.34
 
     elif material == 24: # ITO
+        # Calulating by Drude model
         e_ITO = eq_drude_ITO(coefs_['ITO'] ,Lambda_i)
         ri = sqrt(e_ITO)
+    
+    elif material == 26: # WS2
+        n, k = coefs_['WS2']
+        ri = complex(n,k)
+    
+    elif material == 27: # Platinum
+        # Calulating by Drude model
+        e_Pt = eq_drude_metals(coefs_['Platinum'] ,Lambda_i)
+        ri = sqrt(e_Pt)
+    
+    elif material == 28: # Graphene
+        n, k = coefs_['Graphene']
+        ri = complex(n,(k*Lambda_i)/3)
+    
+    elif material == 29: # BSTS
+        # Calulating by Drude model
+        e_BSTS = eq_BSTS(coefs_['BSTS'], lambda_i)
+        ri = sqrt(e_BSTS)
+    
+    elif material == 30: # Cobalt
+        # Calulating by Drude model
+        e_Co = eq_drude_metals(coefs_['Cobalt'] ,Lambda_i)
+        ri = sqrt(e_Co)
 
-    return complex(round(ri.real, 5),(round(ri.imag,5)))
+    elif material == 31: # Nickel
+        # Calulating by Drude model
+        e_Ni = eq_drude_metals(coefs_['Nickel'] ,Lambda_i)
+        ri = sqrt(e_Ni)
+    
+    elif material == 32: # BaTiO3
+        # Calulating by Sellmeier equation
+        e_Ni = eq_sellmeier(coefs_['BaTiO3'] ,Lambda_i)
+        ri = sqrt(e_Ni)
+
+
+    return complex(round(ri.real, 6),(round(ri.imag,6)))
 
 def interp_Ag(Lambda_i):
     X = [0.1879, 0.1916, 0.1953, 0.1993, 0.2033, 0.2073, 0.2119, 0.2164, 0.2214, 0.2262, 0.2313,
@@ -381,12 +429,12 @@ def eq_drude_zno(coef, lambda_i):
     e_ZnO = e_inf - (wp**2)/(wi**2 + gamma**2) + j*(gamma*wp**2)/((wi**2 + gamma**2)*wi)
     return e_ZnO
 
-def eq_drude_Ag(coef, lambda_i):
+def eq_drude_metals(coef, lambda_i):
     e_inf, lp, lc = coef
     j = complex(0,1)
     wi = lambda_i
-    e_Ag = e_inf - ((lc*(wi**2))/((lc + j*wi)*lp**2))
-    return e_Ag
+    e_m = e_inf - ((lc*(wi**2))/((lc + j*wi)*lp**2))
+    return e_m
 
 def eq_drude_ITO(coef, lambda_i):
     e_inf, lp, lc = coef
@@ -418,3 +466,13 @@ def eq_sellmeier(coef, wi):
     n = sqrt(1 + ((B1 * wi ** 2) / (wi ** 2 - C1)) + ((B2 * wi ** 2) / (wi ** 2 - C2))
                     + ((B3 * wi ** 2) / (wi ** 2 - C3)))
     return n
+
+def eq_BSTS(coef, lambda_i):
+    c, e_inf, wp_ev, gamma_ev, k = coef 
+    wp = wp_ev*k
+    gamma = gamma_ev*k
+    wi = 2*pi*c / lambda_i
+    j = complex(0,1)
+    
+    e_bsts = e_inf - (wp**2)/((wi + j*gamma)*wi)
+    return e_bsts
